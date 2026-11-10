@@ -276,11 +276,17 @@
 
             sendCmd(command);
 
-            driveInterval = setInterval(function() {
-                if (activeDriveKey === keyId && currentMode === "MANUAL" && mqttClient && mqttClient.isConnected()) {
-                    sendCmd(command);
-                }
-            }, 150);
+            // Repeat command to keep the Arduino watchdog alive.
+        driveInterval = setInterval(function() {
+            if (
+                activeDriveKey === keyId &&
+                currentMode === "MANUAL" &&
+                mqttClient &&
+                mqttClient.isConnected()
+            ) {
+                sendCmd(command);
+            }
+        }, 600);
         }
 
         function stopDrive(keyId, event) {

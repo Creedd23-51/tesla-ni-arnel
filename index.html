@@ -301,29 +301,65 @@
             document.getElementById("tel-mode").innerText = command === 'C' ? "LINE FOLLOW ONLY" : "LINE + OBSTACLE";
         }
 
-        // Keyboard Controls
-        document.addEventListener('keydown', function(event) {
-            if (currentMode !== 'MANUAL' || event.repeat) return;
-            let key = event.key.toLowerCase();
-            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
-                event.preventDefault();
-                if (key === 'w' || key === 'arrowup') startDrive('F', 'keyW');
-                if (key === 's' || key === 'arrowdown') startDrive('B', 'keyS');
-                if (key === 'a' || key === 'arrowleft') startDrive('L', 'keyA');
-                if (key === 'd' || key === 'arrowright') startDrive('R', 'keyD');
-            } else if (key === ' ') {
-                sendCmd('H');
-            }
-        });
+       
+// Keyboard Controls
+// Do not intercept typing inside form fields.
+function isTypingTarget(event) {
+    const target = event.target;
 
-        document.addEventListener('keyup', function(event) {
-            if (currentMode !== 'MANUAL') return;
-            let key = event.key.toLowerCase();
-            if (key === 'w' || key === 'arrowup') stopDrive('keyW');
-            if (key === 's' || key === 'arrowdown') stopDrive('keyS');
-            if (key === 'a' || key === 'arrowleft') stopDrive('keyA');
-            if (key === 'd' || key === 'arrowright') stopDrive('keyD');
-        });
+    return target instanceof HTMLElement &&
+        (target.isContentEditable ||
+         ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName));
+}
+
+document.addEventListener('keydown', function(event) {
+    if (isTypingTarget(event)) return;
+    if (currentMode !== 'MANUAL' || event.repeat) return;
+
+    let key = event.key.toLowerCase();
+
+    if (['w', 'a', 's', 'd', 'arrowup',
+         'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+
+        event.preventDefault();
+
+        if (key === 'w' || key === 'arrowup')
+            startDrive('F', 'keyW');
+
+        if (key === 's' || key === 'arrowdown')
+            startDrive('B', 'keyS');
+
+        if (key === 'a' || key === 'arrowleft')
+            startDrive('L', 'keyA');
+
+        if (key === 'd' || key === 'arrowright')
+            startDrive('R', 'keyD');
+
+    } else if (key === ' ') {
+        event.preventDefault();
+        sendCmd('H');
+    }
+});
+
+document.addEventListener('keyup', function(event) {
+    if (isTypingTarget(event)) return;
+    if (currentMode !== 'MANUAL') return;
+
+    let key = event.key.toLowerCase();
+
+    if (key === 'w' || key === 'arrowup')
+        stopDrive('keyW');
+
+    if (key === 's' || key === 'arrowdown')
+        stopDrive('keyS');
+
+    if (key === 'a' || key === 'arrowleft')
+        stopDrive('keyA');
+
+    if (key === 'd' || key === 'arrowright')
+        stopDrive('keyD');
+});
+
     </script>
 </body>
 </html>

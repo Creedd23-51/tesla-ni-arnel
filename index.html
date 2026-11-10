@@ -15,7 +15,8 @@
         .btn-press:active { transform: translateY(2px); border-bottom-width: 0px; margin-bottom: 2px; }
 
         .wasd-grid { display: grid; grid-template-columns: 60px 60px 60px; gap: 8px; justify-content: center; margin-top: 10px; }
-        .key { width: 60px; height: 60px; background-color: #1e222b; border: 2px solid #374151; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; font-size: 24px; transition: 0.1s; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
+        .key { width: 60px; height: 60px; background-color: #1e222b; border: 2px solid #374151; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; font-size: 24px; transition: 0.05s; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
+        .key svg { pointer-events: none; } /* Prevents SVG icon from interrupting touch hold */
         .key:active { background-color: #2b303c; }
         .key.active { background-color: var(--accent-yellow, #f59e0b); color: #000; border-color: var(--accent-yellow, #f59e0b); box-shadow: 0px 0px 15px rgba(245, 158, 11, 0.6); transform: scale(0.95); }
         .key-empty { visibility: hidden; }
@@ -54,6 +55,7 @@
         </div>
 
         <div class="flex-1 w-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
+            <!-- CAMERA FEED -->
             <div class="lg:col-span-2 flex flex-col border border-gray-800 bg-black rounded-md relative h-full min-h-[40vh] shadow-lg overflow-hidden justify-center items-center">
                 <div class="absolute top-0 w-full bg-gradient-to-b from-black/80 to-transparent p-3 z-10 flex justify-between">
                     <span class="text-[10px] font-mono text-emerald-400 border border-emerald-500/30 bg-black/50 px-2 py-1 rounded">ESP32-CAM LIVE STREAM</span>
@@ -61,21 +63,27 @@
                 <img id="videoFeed" src="" alt="Awaiting Video Feed..." class="object-cover w-full h-full text-center text-gray-700 text-sm font-mono" style="transform: rotate(180deg) scaleX(-1);">
             </div>
 
+            <!-- RIGHT SIDEBAR -->
             <div class="flex flex-col gap-4 h-full overflow-y-auto pr-2 pb-4">
+                <!-- SENSOR & SYSTEM STATUS -->
                 <div class="bg-[#111318] border border-gray-800 rounded-md p-4 shrink-0">
                     <div class="flex justify-between border-b border-gray-700 pb-2 mb-3">
-                        <h2 class="text-[10px] font-bold text-gray-400 tracking-wider">SENSOR STATUS</h2>
+                        <h2 class="text-[10px] font-bold text-gray-400 tracking-wider">STATUS & AUTO TELEMETRY</h2>
                     </div>
                     <div class="grid grid-cols-2 gap-y-4 gap-x-2 text-center">
                         <div>
                             <div class="text-[9px] text-gray-500 tracking-widest uppercase mb-1">Current Action</div>
-                            <div id="tel-action" class="text-xs font-mono text-emerald-400 font-bold">HOLD</div>
+                            <div id="tel-action" class="text-xs font-mono text-emerald-400 font-bold">STOPPED</div>
                         </div>
                         <div>
+                            <div class="text-[9px] text-gray-500 tracking-widest uppercase mb-1">System Mode</div>
+                            <div id="tel-mode" class="text-xs font-mono text-blue-400 font-bold">MANUAL (DIRECT)</div>
+                        </div>
+                        <div id="sonar-box" class="opacity-40 transition-opacity">
                             <div class="text-[9px] text-gray-500 tracking-widest uppercase mb-1">Obstacle Sonar</div>
-                            <div id="tel-sonar" class="text-xs font-mono text-emerald-400 font-bold">CLEAR</div>
+                            <div id="tel-sonar" class="text-xs font-mono text-gray-500 font-bold">OFF (MANUAL)</div>
                         </div>
-                        <div>
+                        <div id="ir-box" class="opacity-40 transition-opacity">
                             <div class="text-[9px] text-gray-500 tracking-widest uppercase mb-1">IR Sensor (L-C-R)</div>
                             <div id="tel-ir" class="text-xs font-mono text-white font-bold flex justify-center gap-1">
                                 <span id="ir-l" class="w-3 h-3 rounded-full bg-gray-700 border border-gray-500"></span>
@@ -83,20 +91,17 @@
                                 <span id="ir-r" class="w-3 h-3 rounded-full bg-gray-700 border border-gray-500"></span>
                             </div>
                         </div>
-                        <div>
-                            <div class="text-[9px] text-gray-500 tracking-widest uppercase mb-1">System Mode</div>
-                            <div id="tel-mode" class="text-xs font-mono text-emerald-400 font-bold">MANUAL ACTIVE</div>
-                        </div>
                     </div>
                 </div>
 
+                <!-- CONTROLS -->
                 <div class="bg-[#111318] border border-gray-800 rounded-md p-4 shrink-0 flex flex-col items-center">
                     <div class="grid grid-cols-2 gap-2 w-full max-w-[260px] mb-2">
                         <button id="btn-manual" onclick="toggleMainMode('MANUAL')" class="btn-press bg-blue-600/50 text-blue-300 border border-blue-400 py-3 rounded text-[11px] font-bold tracking-wider transition-colors duration-200">MANUAL MODE</button>
                         <button id="btn-auto" onclick="toggleMainMode('AUTO')" class="btn-press bg-emerald-900/30 text-emerald-400 border border-emerald-800 py-3 rounded text-[11px] font-bold tracking-wider transition-colors duration-200">AUTO MODE</button>
                     </div>
 
-                    <!-- ZERO-LAG D-PAD -->
+                    <!-- PURE GAS-PEDAL D-PAD -->
                     <div id="manualControlsUI" class="w-full max-w-[260px] mb-4 text-center">
                         <div class="wasd-grid">
                             <div class="key key-empty"></div>
@@ -137,6 +142,7 @@
                         </div>
                     </div>
 
+                    <!-- AUTO MODE SUB-OPTIONS -->
                     <div id="auto-options" class="hidden flex-col gap-2 w-full max-w-[260px] mb-4 transition-all duration-300">
                         <button onclick="activateAuto('C')" class="btn-press bg-cyan-900/40 hover:bg-cyan-900/70 text-cyan-300 border border-cyan-700 py-3 rounded text-[11px] font-bold tracking-wider">LINE FOLLOWING ONLY</button>
                         <button onclick="activateAuto('A')" class="btn-press bg-teal-900/40 hover:bg-teal-900/70 text-teal-300 border border-teal-700 py-3 rounded text-[11px] font-bold tracking-wider">OBSTACLE DETECTING WITH LINE FOLLOWING</button>
@@ -145,6 +151,7 @@
                     <button onclick="stopAllDrive(); sendCmd('H')" class="btn-press w-full max-w-[260px] bg-red-900/40 hover:bg-red-900/70 text-red-400 border border-red-800 py-3 rounded text-sm font-bold tracking-wider">EMERGENCY STOP</button>
                 </div>
 
+                <!-- TERMINAL LOG -->
                 <div class="bg-[#0a0a0c] border border-gray-800 rounded-md p-3 flex-1 min-h-[120px] flex flex-col">
                     <div class="flex justify-between pb-1 mb-2">
                         <h2 class="text-[10px] font-bold text-gray-500 tracking-wider">COMMAND ACTIVITY LOG</h2>
@@ -166,7 +173,7 @@
         function logTerminal(msg, type = "info") {
             const terminal = document.getElementById("terminal");
             const time = new Date().toLocaleTimeString([], { hour12: false });
-            let color = type === "cmd" ? "text-cyan-400" : type === "alert" ? "text-red-400" : "text-gray-400";
+            let color = type === "cmd" ? "text-cyan-400" : type === "alert" ? "text-red-400" : "text-emerald-400";
             terminal.innerHTML += `<div class="${color}">[${time}] > ${msg}</div>`;
             terminal.scrollTop = terminal.scrollHeight;
         }
@@ -183,8 +190,6 @@
             document.getElementById("status").className = "text-xs font-bold text-yellow-500";
 
             const clientId = "STEER_Dash_" + Math.random().toString(16).slice(2, 12);
-            
-            // Local Mosquitto WebSockets port is 9001
             mqttClient = new Paho.MQTT.Client(brokerHost, 9001, "/mqtt", clientId);
 
             mqttClient.onConnectionLost = function(response) {
@@ -195,6 +200,9 @@
             };
 
             mqttClient.onMessageArrived = function(message) {
+                // Only process incoming sensor telemetry when in AUTO mode
+                if (currentMode !== "AUTO") return;
+
                 let payload = message.payloadString;
                 if (payload.startsWith("IR:")) {
                     let irVals = payload.replace("IR:", "").split(",");
@@ -209,13 +217,11 @@
                 } else if (payload.includes("CLEAR")) {
                     document.getElementById("tel-sonar").innerText = "CLEAR";
                     document.getElementById("tel-sonar").className = "text-xs font-mono text-emerald-400 font-bold";
-                } else {
-                    document.getElementById("tel-action").innerText = payload;
                 }
             };
 
             mqttClient.connect({
-                useSSL: false, // LOCAL IS UNENCRYPTED
+                useSSL: false,
                 timeout: 3,
                 onSuccess: function() {
                     document.getElementById("status").innerText = "MQTT: CONNECTED";
@@ -231,19 +237,28 @@
             });
         }
 
+        // ========================================================
+        // INSTANT MANUAL GAS PEDAL LOGIC (NO HEARTBEAT, NO DELAY)
+        // ========================================================
+
         function startDrive(command, keyId, event) {
             if (currentMode !== "MANUAL") return;
             if (!mqttClient || !mqttClient.isConnected()) return;
             if (event) event.preventDefault();
-            if (activeDriveKey === keyId) return;
             
-            if (activeDriveKey !== null) stopDrive(activeDriveKey);
+            if (activeDriveKey === keyId) return;
+
+            // If switching directly from one direction key to another, unhighlight the old key without stopping
+            if (activeDriveKey !== null) {
+                const prevEl = document.getElementById(activeDriveKey);
+                if (prevEl) prevEl.classList.remove("active");
+            }
 
             activeDriveKey = keyId;
             const el = document.getElementById(keyId);
             if (el) el.classList.add("active");
 
-            sendCmd(command); // Send exactly once
+            sendCmd(command);
         }
 
         function stopDrive(keyId, event) {
@@ -254,11 +269,16 @@
             if (el) el.classList.remove("active");
 
             activeDriveKey = null;
-            sendCmd("S"); // Send Stop command instantly
+            sendCmd("S");
         }
 
         function stopAllDrive() {
-            if (activeDriveKey !== null) stopDrive(activeDriveKey);
+            if (activeDriveKey !== null) {
+                const el = document.getElementById(activeDriveKey);
+                if (el) el.classList.remove("active");
+                activeDriveKey = null;
+                sendCmd("S");
+            }
         }
 
         function sendCmd(command) {
@@ -267,21 +287,52 @@
             message.destinationName = "TESLANIARNEL/cmd";
             mqttClient.send(message);
 
+            let name = command === 'F' ? "FORWARD" :
+                       command === 'B' ? "REVERSE" :
+                       command === 'L' ? "LEFT" :
+                       command === 'R' ? "RIGHT" :
+                       command === 'A' ? "AUTO (OBSTACLE + LINE)" :
+                       command === 'C' ? "AUTO (LINE ONLY)" : "STOPPED";
+
+            document.getElementById("tel-action").innerText = name;
+
             if (command !== lastLoggedCmd) {
-                let name = command === 'F' ? "FORWARD" : command === 'B' ? "REVERSE" : command === 'L' ? "LEFT" : command === 'R' ? "RIGHT" : "HOLD/STOP";
                 logTerminal("Command Sent: " + name, "cmd");
                 lastLoggedCmd = command;
             }
         }
 
+        // ========================================================
+        // MODE SWITCHING (MANUAL = WHEELS ONLY, AUTO = SENSORS ON)
+        // ========================================================
+
         function toggleMainMode(mode) {
             stopAllDrive();
             currentMode = mode;
             sendCmd("H");
+
             document.getElementById("manualControlsUI").classList.toggle("hidden", mode !== "MANUAL");
             document.getElementById("auto-options").classList.toggle("hidden", mode === "MANUAL");
             document.getElementById("auto-options").classList.toggle("flex", mode !== "MANUAL");
-            document.getElementById("tel-mode").innerText = mode === "MANUAL" ? "MANUAL ACTIVE" : "AUTO (WAITING)";
+
+            const sonarBox = document.getElementById("sonar-box");
+            const irBox = document.getElementById("ir-box");
+
+            if (mode === "MANUAL") {
+                document.getElementById("tel-mode").innerText = "MANUAL (DIRECT)";
+                document.getElementById("tel-mode").className = "text-xs font-mono text-blue-400 font-bold";
+                document.getElementById("tel-sonar").innerText = "OFF (MANUAL)";
+                document.getElementById("tel-sonar").className = "text-xs font-mono text-gray-500 font-bold";
+                sonarBox.classList.add("opacity-40");
+                irBox.classList.add("opacity-40");
+            } else {
+                document.getElementById("tel-mode").innerText = "AUTO (SELECT MODE)";
+                document.getElementById("tel-mode").className = "text-xs font-mono text-emerald-400 font-bold";
+                document.getElementById("tel-sonar").innerText = "STANDBY";
+                document.getElementById("tel-sonar").className = "text-xs font-mono text-emerald-400 font-bold";
+                sonarBox.classList.remove("opacity-40");
+                irBox.classList.remove("opacity-40");
+            }
         }
 
         function activateAuto(command) {
@@ -321,6 +372,8 @@
             if (key === "d" || key === "arrowright") stopDrive("keyD");
         });
 
+        // Global safety release: lifting mouse/finger anywhere stops manual drive
+        window.addEventListener("pointerup", stopAllDrive);
         window.addEventListener("blur", stopAllDrive);
         document.addEventListener("contextmenu", function(event) { if (event.target.closest(".key")) event.preventDefault(); });
     </script>

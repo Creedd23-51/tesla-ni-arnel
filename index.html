@@ -13,8 +13,7 @@
         ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #555; }
         .btn-press:active { transform: translateY(2px); border-bottom-width: 0px; margin-bottom: 2px; }
-        
-        /* D-PAD Grid Styles */
+
         .wasd-grid { display: grid; grid-template-columns: 60px 60px 60px; gap: 8px; justify-content: center; margin-top: 10px; }
         .key { width: 60px; height: 60px; background-color: #1e222b; border: 2px solid #374151; color: white; display: flex; align-items: center; justify-content: center; font-weight: bold; border-radius: 8px; font-size: 24px; transition: 0.1s; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: none; }
         .key:active { background-color: #2b303c; }
@@ -31,18 +30,15 @@
                 <div class="w-3 h-3 rounded-full bg-emerald-500 shadow-[0_0_8px_#10b981] animate-pulse"></div>
                 <h2 class="text-xl font-black text-emerald-400 tracking-widest">SYSTEM INITIALIZATION</h2>
             </div>
-            
+
             <label class="block text-[10px] font-bold text-gray-500 tracking-widest mb-1">ESP32-CAM IP ADDRESS</label>
             <input type="text" id="camIP" value="http://192.168.100.135:81/stream" class="w-full p-3 mb-4 bg-black rounded text-gray-300 border border-gray-700 focus:border-emerald-500 outline-none font-mono text-xs">
-            
-            <label class="block text-[10px] font-bold text-gray-500 tracking-widest mb-1">MQTT BROKER (WEBSOCKET)</label>
-            <input type="text" id="mqttBroker" value="broker.hivemq.com" class="w-full p-3 mb-4 bg-black rounded text-gray-300 border border-gray-700 focus:border-emerald-500 outline-none font-mono text-xs">
-            
-            <label class="block text-[10px] font-bold text-gray-500 tracking-widest mb-1">BROKER PASSWORD (SECURE KEY)</label>
-            <input type="password" id="mqttPass" placeholder="Leave blank for public HiveMQ or Local Mosquitto" class="w-full p-3 mb-6 bg-black rounded text-gray-300 border border-gray-700 focus:border-emerald-500 outline-none font-mono text-xs">
-            
+
+            <label class="block text-[10px] font-bold text-gray-500 tracking-widest mb-1">LOCAL MQTT BROKER (IP ADDRESS)</label>
+            <input type="text" id="mqttBroker" value="192.168.100.110" class="w-full p-3 mb-6 bg-black rounded text-gray-300 border border-gray-700 focus:border-emerald-500 outline-none font-mono text-xs">
+
             <button onclick="initializeDashboard()" class="w-full bg-emerald-900/40 hover:bg-emerald-900/70 text-emerald-400 border border-emerald-800 font-bold py-3 px-4 rounded transition-colors tracking-widest text-sm">
-                ESTABLISH LINK
+                ESTABLISH LOCAL LINK
             </button>
         </div>
     </div>
@@ -58,7 +54,6 @@
         </div>
 
         <div class="flex-1 w-full p-4 grid grid-cols-1 lg:grid-cols-3 gap-4 min-h-0">
-            <!-- CAMERA FEED -->
             <div class="lg:col-span-2 flex flex-col border border-gray-800 bg-black rounded-md relative h-full min-h-[40vh] shadow-lg overflow-hidden justify-center items-center">
                 <div class="absolute top-0 w-full bg-gradient-to-b from-black/80 to-transparent p-3 z-10 flex justify-between">
                     <span class="text-[10px] font-mono text-emerald-400 border border-emerald-500/30 bg-black/50 px-2 py-1 rounded">ESP32-CAM LIVE STREAM</span>
@@ -66,9 +61,7 @@
                 <img id="videoFeed" src="" alt="Awaiting Video Feed..." class="object-cover w-full h-full text-center text-gray-700 text-sm font-mono" style="transform: rotate(180deg) scaleX(-1);">
             </div>
 
-            <!-- CONTROLS -->
             <div class="flex flex-col gap-4 h-full overflow-y-auto pr-2 pb-4">
-                
                 <div class="bg-[#111318] border border-gray-800 rounded-md p-4 shrink-0">
                     <div class="flex justify-between border-b border-gray-700 pb-2 mb-3">
                         <h2 class="text-[10px] font-bold text-gray-400 tracking-wider">SENSOR STATUS</h2>
@@ -103,26 +96,42 @@
                         <button id="btn-auto" onclick="toggleMainMode('AUTO')" class="btn-press bg-emerald-900/30 text-emerald-400 border border-emerald-800 py-3 rounded text-[11px] font-bold tracking-wider transition-colors duration-200">AUTO MODE</button>
                     </div>
 
-                    <!-- WATCHDOG HEARTBEAT D-PAD -->
+                    <!-- ZERO-LAG D-PAD -->
                     <div id="manualControlsUI" class="w-full max-w-[260px] mb-4 text-center">
                         <div class="wasd-grid">
                             <div class="key key-empty"></div>
-                            
-                            <div class="key text-gray-300" id="keyW" onpointerdown="startDrive('F', 'keyW', event)" onpointerup="stopDrive('keyW', event)" onpointerout="stopDrive('keyW', event)" onpointercancel="stopDrive('keyW', event)" oncontextmenu="return false;">
+                            <div class="key text-gray-300" id="keyW"
+                                onpointerdown="startDrive('F', 'keyW', event)"
+                                onpointerup="stopDrive('keyW', event)"
+                                onpointerleave="stopDrive('keyW', event)"
+                                onpointercancel="stopDrive('keyW', event)"
+                                oncontextmenu="return false;">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 15l7-7 7 7"></path></svg>
                             </div>
-                            
                             <div class="key key-empty"></div>
                             
-                            <div class="key text-gray-300" id="keyA" onpointerdown="startDrive('L', 'keyA', event)" onpointerup="stopDrive('keyA', event)" onpointerout="stopDrive('keyA', event)" onpointercancel="stopDrive('keyA', event)" oncontextmenu="return false;">
+                            <div class="key text-gray-300" id="keyA"
+                                onpointerdown="startDrive('L', 'keyA', event)"
+                                onpointerup="stopDrive('keyA', event)"
+                                onpointerleave="stopDrive('keyA', event)"
+                                onpointercancel="stopDrive('keyA', event)"
+                                oncontextmenu="return false;">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M15 19l-7-7 7-7"></path></svg>
                             </div>
-                            
-                            <div class="key text-gray-300" id="keyS" onpointerdown="startDrive('B', 'keyS', event)" onpointerup="stopDrive('keyS', event)" onpointerout="stopDrive('keyS', event)" onpointercancel="stopDrive('keyS', event)" oncontextmenu="return false;">
+                            <div class="key text-gray-300" id="keyS"
+                                onpointerdown="startDrive('B', 'keyS', event)"
+                                onpointerup="stopDrive('keyS', event)"
+                                onpointerleave="stopDrive('keyS', event)"
+                                onpointercancel="stopDrive('keyS', event)"
+                                oncontextmenu="return false;">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M19 9l-7 7-7-7"></path></svg>
                             </div>
-                            
-                            <div class="key text-gray-300" id="keyD" onpointerdown="startDrive('R', 'keyD', event)" onpointerup="stopDrive('keyD', event)" onpointerout="stopDrive('keyD', event)" onpointercancel="stopDrive('keyD', event)" oncontextmenu="return false;">
+                            <div class="key text-gray-300" id="keyD"
+                                onpointerdown="startDrive('R', 'keyD', event)"
+                                onpointerup="stopDrive('keyD', event)"
+                                onpointerleave="stopDrive('keyD', event)"
+                                onpointercancel="stopDrive('keyD', event)"
+                                oncontextmenu="return false;">
                                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 5l7 7-7 7"></path></svg>
                             </div>
                         </div>
@@ -133,7 +142,7 @@
                         <button onclick="activateAuto('A')" class="btn-press bg-teal-900/40 hover:bg-teal-900/70 text-teal-300 border border-teal-700 py-3 rounded text-[11px] font-bold tracking-wider">OBSTACLE DETECTING WITH LINE FOLLOWING</button>
                     </div>
 
-                    <button onclick="sendCmd('H')" class="btn-press w-full max-w-[260px] bg-red-900/40 hover:bg-red-900/70 text-red-400 border border-red-800 py-3 rounded text-sm font-bold tracking-wider">EMERGENCY STOP</button>
+                    <button onclick="stopAllDrive(); sendCmd('H')" class="btn-press w-full max-w-[260px] bg-red-900/40 hover:bg-red-900/70 text-red-400 border border-red-800 py-3 rounded text-sm font-bold tracking-wider">EMERGENCY STOP</button>
                 </div>
 
                 <div class="bg-[#0a0a0c] border border-gray-800 rounded-md p-3 flex-1 min-h-[120px] flex flex-col">
@@ -144,15 +153,14 @@
                         <div>> System initialized...</div>
                     </div>
                 </div>
-
             </div>
         </div>
     </div>
 
     <script>
-        var mqttClient;
-        var currentMode = "MANUAL"; 
-        var driveInterval = null;
+        var mqttClient = null;
+        var currentMode = "MANUAL";
+        var activeDriveKey = null;
         var lastLoggedCmd = "";
 
         function logTerminal(msg, type = "info") {
@@ -164,23 +172,26 @@
         }
 
         function initializeDashboard() {
-            document.getElementById('videoFeed').src = document.getElementById('camIP').value;
-            const brokerUrl = document.getElementById('mqttBroker').value;
-            let port = 8884, use_ssl = true;
-            
-            if (brokerUrl.includes("192.168") || brokerUrl.includes("localhost")) {
-                port = 1883; use_ssl = false; 
-            }
+            const brokerHost = document.getElementById('mqttBroker').value.trim();
+            if (!brokerHost) return;
 
+            document.getElementById('videoFeed').src = document.getElementById('camIP').value;
             document.getElementById('setupOverlay').classList.add('hidden');
             document.getElementById('mainUI').classList.remove('hidden');
             document.getElementById('mainUI').classList.add('flex');
+            document.getElementById("status").innerText = "MQTT: CONNECTING...";
+            document.getElementById("status").className = "text-xs font-bold text-yellow-500";
+
+            const clientId = "STEER_Dash_" + Math.random().toString(16).slice(2, 12);
             
-            mqttClient = new Paho.MQTT.Client(brokerUrl, port, "STEER_Dash_" + parseInt(Math.random() * 1000));
-            mqttClient.onConnectionLost = function () {
+            // Local Mosquitto WebSockets port is 9001
+            mqttClient = new Paho.MQTT.Client(brokerHost, 9001, "/mqtt", clientId);
+
+            mqttClient.onConnectionLost = function(response) {
+                stopAllDrive();
                 document.getElementById("status").innerText = "MQTT: DISCONNECTED";
                 document.getElementById("status").className = "text-xs font-bold text-red-500";
-                logTerminal("Connection lost to broker.", "alert");
+                logTerminal("Connection lost to Local Mosquitto.", "alert");
             };
 
             mqttClient.onMessageArrived = function(message) {
@@ -203,98 +214,115 @@
                 }
             };
 
-            mqttClient.connect({ 
-                useSSL: use_ssl, password: document.getElementById('mqttPass').value,
-                onSuccess: function () {
+            mqttClient.connect({
+                useSSL: false, // LOCAL IS UNENCRYPTED
+                timeout: 3,
+                onSuccess: function() {
                     document.getElementById("status").innerText = "MQTT: CONNECTED";
                     document.getElementById("status").className = "text-xs font-bold text-emerald-500";
+                    logTerminal("Connected to Local Mosquitto!", "ok");
                     mqttClient.subscribe("TESLANIARNEL/telemetry");
+                },
+                onFailure: function() {
+                    document.getElementById("status").innerText = "MQTT: CONNECTION FAILED";
+                    document.getElementById("status").className = "text-xs font-bold text-red-500";
+                    logTerminal("Ensure Mosquitto port 9001 is open.", "alert");
                 }
             });
         }
 
-        // =====================================
-        // HEARTBEAT / WATCHDOG COMMAND LOGIC
-        // =====================================
         function startDrive(command, keyId, event) {
-            if (event) event.preventDefault();
             if (currentMode !== "MANUAL") return;
+            if (!mqttClient || !mqttClient.isConnected()) return;
+            if (event) event.preventDefault();
+            if (activeDriveKey === keyId) return;
+            
+            if (activeDriveKey !== null) stopDrive(activeDriveKey);
 
-            let el = document.getElementById(keyId);
-            if (el) el.classList.add('active');
+            activeDriveKey = keyId;
+            const el = document.getElementById(keyId);
+            if (el) el.classList.add("active");
 
-            if (driveInterval) clearInterval(driveInterval);
-
-            sendCmd(command); // Send immediately
-            // Spam the command every 150ms to keep Arduino watchdog alive
-            driveInterval = setInterval(() => { sendCmd(command); }, 150);
+            sendCmd(command); // Send exactly once
         }
 
         function stopDrive(keyId, event) {
             if (event) event.preventDefault();
-            
-            let el = document.getElementById(keyId);
-            if (el) el.classList.remove('active');
+            if (activeDriveKey !== keyId) return;
 
-            if (driveInterval) {
-                clearInterval(driveInterval);
-                driveInterval = null;
-            }
-            sendCmd('S');
+            const el = document.getElementById(keyId);
+            if (el) el.classList.remove("active");
+
+            activeDriveKey = null;
+            sendCmd("S"); // Send Stop command instantly
+        }
+
+        function stopAllDrive() {
+            if (activeDriveKey !== null) stopDrive(activeDriveKey);
         }
 
         function sendCmd(command) {
-            if(!mqttClient || !mqttClient.isConnected()) return;
-
+            if (!mqttClient || !mqttClient.isConnected()) return;
             let message = new Paho.MQTT.Message(command);
             message.destinationName = "TESLANIARNEL/cmd";
             mqttClient.send(message);
-            
+
             if (command !== lastLoggedCmd) {
                 let name = command === 'F' ? "FORWARD" : command === 'B' ? "REVERSE" : command === 'L' ? "LEFT" : command === 'R' ? "RIGHT" : "HOLD/STOP";
-                logTerminal(`Command Sent: ${name}`, "cmd");
+                logTerminal("Command Sent: " + name, "cmd");
                 lastLoggedCmd = command;
             }
         }
 
         function toggleMainMode(mode) {
+            stopAllDrive();
             currentMode = mode;
-            sendCmd('H'); 
-            
-            document.getElementById("manualControlsUI").classList.toggle("hidden", mode !== 'MANUAL');
-            document.getElementById("auto-options").classList.toggle("hidden", mode === 'MANUAL');
-            document.getElementById("auto-options").classList.toggle("flex", mode !== 'MANUAL');
-            document.getElementById("tel-mode").innerText = mode === 'MANUAL' ? "MANUAL ACTIVE" : "AUTO (WAITING)";
+            sendCmd("H");
+            document.getElementById("manualControlsUI").classList.toggle("hidden", mode !== "MANUAL");
+            document.getElementById("auto-options").classList.toggle("hidden", mode === "MANUAL");
+            document.getElementById("auto-options").classList.toggle("flex", mode !== "MANUAL");
+            document.getElementById("tel-mode").innerText = mode === "MANUAL" ? "MANUAL ACTIVE" : "AUTO (WAITING)";
         }
 
         function activateAuto(command) {
+            stopAllDrive();
+            if (!mqttClient || !mqttClient.isConnected()) return;
             sendCmd(command);
-            document.getElementById("tel-mode").innerText = command === 'C' ? "LINE FOLLOW ONLY" : "LINE + OBSTACLE";
+            document.getElementById("tel-mode").innerText = command === "C" ? "LINE FOLLOW ONLY" : "LINE + OBSTACLE";
         }
 
-        // Keyboard Controls
-        document.addEventListener('keydown', function(event) {
-            if (currentMode !== 'MANUAL' || event.repeat) return;
+        function isTypingTarget(event) {
+            const target = event.target;
+            return (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.tagName === "SELECT" || target.isContentEditable);
+        }
+
+        document.addEventListener("keydown", function(event) {
+            if (isTypingTarget(event) || currentMode !== "MANUAL" || event.repeat) return;
             let key = event.key.toLowerCase();
-            if (['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright'].includes(key)) {
+            if (["w", "a", "s", "d", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(key)) {
                 event.preventDefault();
-                if (key === 'w' || key === 'arrowup') startDrive('F', 'keyW');
-                if (key === 's' || key === 'arrowdown') startDrive('B', 'keyS');
-                if (key === 'a' || key === 'arrowleft') startDrive('L', 'keyA');
-                if (key === 'd' || key === 'arrowright') startDrive('R', 'keyD');
-            } else if (key === ' ') {
-                sendCmd('H');
+                if (key === "w" || key === "arrowup") startDrive("F", "keyW");
+                if (key === "s" || key === "arrowdown") startDrive("B", "keyS");
+                if (key === "a" || key === "arrowleft") startDrive("L", "keyA");
+                if (key === "d" || key === "arrowright") startDrive("R", "keyD");
+            } else if (key === " ") {
+                event.preventDefault();
+                stopAllDrive();
+                sendCmd("H");
             }
         });
 
-        document.addEventListener('keyup', function(event) {
-            if (currentMode !== 'MANUAL') return;
+        document.addEventListener("keyup", function(event) {
+            if (isTypingTarget(event) || currentMode !== "MANUAL") return;
             let key = event.key.toLowerCase();
-            if (key === 'w' || key === 'arrowup') stopDrive('keyW');
-            if (key === 's' || key === 'arrowdown') stopDrive('keyS');
-            if (key === 'a' || key === 'arrowleft') stopDrive('keyA');
-            if (key === 'd' || key === 'arrowright') stopDrive('keyD');
+            if (key === "w" || key === "arrowup") stopDrive("keyW");
+            if (key === "s" || key === "arrowdown") stopDrive("keyS");
+            if (key === "a" || key === "arrowleft") stopDrive("keyA");
+            if (key === "d" || key === "arrowright") stopDrive("keyD");
         });
+
+        window.addEventListener("blur", stopAllDrive);
+        document.addEventListener("contextmenu", function(event) { if (event.target.closest(".key")) event.preventDefault(); });
     </script>
 </body>
 </html>
